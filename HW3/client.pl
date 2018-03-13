@@ -3,6 +3,7 @@
 use Getopt::Long;
 use Pod::Usage;
 use Term::ReadLine;
+use DDP;
 use warnings;
 use strict;
 use 5.016;
@@ -25,6 +26,10 @@ GetOptions(
 );
 
 say "Verbose level: $verbose" if $verbose ;
+
+#Checking all modules
+p %INC if $verbose>1;
+
 
 #Absolute path init
 say "Arguments:[".join(',',@ARGV)."]" if $verbose;
@@ -65,7 +70,6 @@ my %commands = (
 
 my $term = Term::ReadLine->new('Perl local client ');
 my $prompt = "> ";
-#$term->Features->{autohistory}=1;
 $term->read_history();
 my $attribs = $term->Attribs;
 $attribs->{completion_entry_function} = $attribs->{list_completion_function};
@@ -93,8 +97,6 @@ while ( defined ($_ = $term->readline($prompt)) ) {
 
 	}
 	say $OUT $res unless $@;
-	#$term->addhistory($_) if /\S/;
-
 }
 
 END{
