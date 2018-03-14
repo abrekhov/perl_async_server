@@ -4,13 +4,14 @@ use Getopt::Long;
 use Pod::Usage;
 use Term::ReadLine;
 use DDP;
+use lib::Clicom;
 use warnings;
 use strict;
 use 5.016;
 
 
 #Options
-my $verbose='';
+my $verbose=0;
 my $instructions = <<EOF;
 Usage:
 	client.pl [-h] [-v] /path/to/somewhere
@@ -28,6 +29,7 @@ GetOptions(
 say "Verbose level: $verbose" if $verbose ;
 
 #Checking all modules
+say "Included modules:" if $verbose>1;
 p %INC if $verbose>1;
 
 
@@ -62,7 +64,10 @@ sub cp{
 
 #Commands init
 my %commands = (
-	'ls'=>\&ls,
+	'ls'=>sub{ 
+		my $obj=lib::Clicom::List->(@_);
+		$obj->execute();       	
+	},
 	'cp'=>\&cp,
 	'mv'=>\&mv,
 	'rm'=>\&rm,
@@ -84,8 +89,9 @@ while ( defined ($_ = $term->readline($prompt)) ) {
 	elsif(/^$/){
 		$res = $_;
 	}
-	elsif(/^exit$/){
+	elsif(/^\s*exit\s*$/){
 		say "Exitting client..." if $verbose>0;
+		$term->write_history();
 		exit;
 	}
 	else{
@@ -99,8 +105,5 @@ while ( defined ($_ = $term->readline($prompt)) ) {
 	say $OUT $res unless $@;
 }
 
-END{
-	$term->write_history();
-}
 
 
