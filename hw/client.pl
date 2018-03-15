@@ -4,7 +4,10 @@ use Getopt::Long;
 use Pod::Usage;
 use Term::ReadLine;
 use DDP;
-use lib::Clicom;
+use Clicom::List;
+use Clicom::Copy;
+use Clicom::Remove;
+use Clicom::Move;
 use warnings;
 use strict;
 use 5.016;
@@ -40,37 +43,26 @@ my $currpath = qx(cd $cpath && pwd);
 chomp $currpath; 
 say "Absolute path:".$currpath."..." if $verbose;
 
-#Commands functions
-sub ls{
-	say "debug: List of files(ls)" if $verbose>0;
-	say "debug2: qx(ls -lA $currpath)" if $verbose>1;
-	return qx(ls -lA $currpath);
-}
-sub rm{
-	say "debug: Removing $_[1](rm)" if $verbose>0;
-	say "debug2: unlink $currpath/$_[1]" if $verbose>1;
-	unlink $currpath."/".$_[1]; 
-}
-sub mv{
-	say "debug: Renaming $_[1] in $_[2] (mv)" if $verbose>0;
-	say "debug2: rename currpath/$_[1] , $currpath/$_[2]" if $verbose>1;
-	rename $currpath."/".$_[1] , $currpath."/".$_[2];
-}
-sub cp{
-	say "debug: Copying $_[1] in $currpath/$_[2] (cp)" if $verbose>0;
-	say "debug2: qx(cp $_[1] $currpath/$_[2])" if $verbose>1;
-	return qx(cp $_[1] $currpath/$_[2]);
-}
+
 
 #Commands init
 my %commands = (
-	'ls'=>sub{ 
-		my $obj=lib::Clicom::List->(@_);
+	'ls'=>sub{
+		my $obj=List->new(@_);
 		$obj->execute();       	
 	},
-	'cp'=>\&cp,
-	'mv'=>\&mv,
-	'rm'=>\&rm,
+	'cp'=>sub{
+		my $obj=Copy->new(@_);
+		$obj->execute();       	
+	},
+	'mv'=>sub{
+		my $obj=Move->new(@_);
+		$obj->execute();       	
+	},
+	'rm'=>sub{
+		my $obj=Remove->new(@_);
+		$obj->execute();       	
+	}
 );
 
 my $term = Term::ReadLine->new('Perl local client ');
@@ -96,11 +88,12 @@ while ( defined ($_ = $term->readline($prompt)) ) {
 	}
 	else{
 		my @args = split /\s+/, $_;
+		my $comkey = shift @args;
+		unshift @args, ($currpath, $verbose);
 		eval{
-			$res = $commands{$args[0]}->(@args); 	
+			$res = $commands{$comkey}->(@args); 	
 		 } or say "This version support only: ".join(", ",keys %commands)." functions.";
 		
-
 	}
 	say $OUT $res unless $@;
 }
