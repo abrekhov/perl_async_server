@@ -83,7 +83,6 @@ while ( defined ($_ = $term->readline($prompt)) ) {
 	}
 	elsif(/^\s*exit\s*$/){
 		say "Exitting client..." if $verbose>0;
-		$term->write_history();
 		exit;
 	}
 	else{
@@ -92,11 +91,15 @@ while ( defined ($_ = $term->readline($prompt)) ) {
 		unshift @args, ($currpath, $verbose);
 		eval{
 			$res = $commands{$comkey}->(@args); 	
-		 } or say "This version support only: ".join(", ",keys %commands)." functions.";
+		 1} or warn "Error: $@ \nThis version support only: ".join(", ",keys %commands)." functions.";
 		
 	}
 	say $OUT $res unless $@;
 }
 
-
+END{
+	if(defined($term)){
+		$term->write_history() or say "History written";
+	}
+}
 
