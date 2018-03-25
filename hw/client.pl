@@ -4,6 +4,7 @@ use Getopt::Long;
 use Pod::Usage;
 use Term::ReadLine;
 use DDP;
+use Clicom::StrHandler;
 use Clicom::List;
 use Clicom::Copy;
 use Clicom::Remove;
@@ -86,7 +87,9 @@ while ( defined ($_ = $term->readline($prompt)) ) {
 		exit;
 	}
 	else{
-		my @args = split /\s+/, $_;
+		#my @args = split /\s+/, $_;
+		my $shandler = StrHandler->new($_);
+		my @args = $shandler->prepare();
 		my $comkey = shift @args;
 		unshift @args, ($currpath, $verbose);
 		eval{
