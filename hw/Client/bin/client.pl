@@ -4,18 +4,21 @@ use Getopt::Long;
 use Pod::Usage;
 use Term::ReadLine;
 use DDP;
-use Clicom::StrHandler;
-use Clicom::List;
-use Clicom::Copy;
-use Clicom::Remove;
-use Clicom::Move;
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use Context;
+
+#use Clicom::Context;
+#use Clicom::List;
+#use Clicom::Copy;
+#use Clicom::Remove;
+#use Clicom::Move;
 use warnings;
 use strict;
 use 5.016;
 
-
 #Options
-my $verbose=0;
+our $verbose=0;
 my $instructions = <<EOF;
 Usage:
 	client.pl [-h] [-v] /path/to/somewhere
@@ -30,6 +33,7 @@ GetOptions(
 	'h|help'=>sub{ die($instructions); }
 );
 
+
 say "Verbose level: $verbose" if $verbose ;
 
 #Checking all modules
@@ -40,38 +44,25 @@ p %INC if $verbose>1;
 #Absolute path init
 say "Arguments:[".join(',',@ARGV)."]" if $verbose;
 my $cpath = $ARGV[0] or die $instructions;
-my $currpath = qx(cd $cpath && pwd);
+our $currpath = qx(cd $cpath && pwd);
 chomp $currpath; 
-say "Absolute path:".$currpath."..." if $verbose;
+say "Absolute path:" . $currpath if $verbose;
+
+#Global hash
+our %global;
+$global{verbose}=$verbose;
+$global{currpath}=$currpath;
 
 
-
-#Commands init
-my %commands = (
-	'ls'=>sub{
-		my $obj=List->new(@_);
-		$obj->execute();       	
-	},
-	'cp'=>sub{
-		my $obj=Copy->new(@_);
-		$obj->execute();       	
-	},
-	'mv'=>sub{
-		my $obj=Move->new(@_);
-		$obj->execute();       	
-	},
-	'rm'=>sub{
-		my $obj=Remove->new(@_);
-		$obj->execute();       	
-	}
-);
+#Commands list
+my @commands =qw( ls cp rm mv);
 
 my $term = Term::ReadLine->new('Perl local client ');
 my $prompt = "> ";
 $term->read_history();
 my $attribs = $term->Attribs;
 $attribs->{completion_entry_function} = $attribs->{list_completion_function};
-$attribs->{completion_word}=[keys %commands];
+$attribs->{completion_word}=@commands;
 my $OUT = $term->OUT || \*STDOUT;
 while ( defined ($_ = $term->readline($prompt)) ) {
 
@@ -87,14 +78,10 @@ while ( defined ($_ = $term->readline($prompt)) ) {
 		exit;
 	}
 	else{
-		#my @args = split /\s+/, $_;
-		my $shandler = StrHandler->new($_);
-		my @args = $shandler->prepare();
-		my $comkey = shift @args;
-		unshift @args, ($currpath, $verbose);
+		my $context = Context->new( %global, string=>$_);
 		eval{
-			$res = $commands{$comkey}->(@args); 	
-		 1} or warn "Error: $@ \nThis version support only: ".join(", ",keys %commands)." functions.";
+			$res = $context->execute();  	
+		 1} or warn "Error: $@ \nThis version support only: " . join(", ",@commands) . " functions.";
 		
 	}
 	say $OUT $res unless $@;
@@ -105,4 +92,5 @@ END{
 		$term->write_history() or say "History written";
 	}
 }
+
 
