@@ -62,7 +62,7 @@ my $prompt = "> ";
 $term->read_history();
 my $attribs = $term->Attribs;
 $attribs->{completion_entry_function} = $attribs->{list_completion_function};
-$attribs->{completion_word}=@commands;
+$attribs->{completion_word}=\@commands;
 my $OUT = $term->OUT || \*STDOUT;
 while ( defined ($_ = $term->readline($prompt)) ) {
 

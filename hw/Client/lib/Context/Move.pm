@@ -1,26 +1,21 @@
-use 5.016;
-use warnings;
+package Context::Move;
+########################
+use DDP;
 
-{
-package Move;
-	sub new{
-		my $class = shift;
-		my ($currpath,$verbose,$file1,$file2) = @_;
-		my $self = bless{
-			file1=>$file1,
-			file2=>$file2,
-			currpath=>$currpath,
-			verbose=>$verbose
-		}, $class;
-		return $self;	
-	}
+use 5.016;
+use parent 'Context::Base';
 
 	sub execute{
 		my $self = shift;
-		say "debug: Renaming $self->{file1} in $self->{file2} (mv)" if $self->{verbose}>0;
-		say "debug2: rename $self->{currpath}/$self->{file1} , $self->{currpath}/$self->{file2}" if $self->{verbose}>1;
-		rename $self->{currpath}."/".$self->{file1} , $self->{currpath}."/".$self->{file2};
+        die "Need at least two args" if scalar @{ $self->{ files } } < 2;
+        my $dist = pop @{ $self->{ files } };
+        foreach ( @{ $self->{ files } } ){
+            say "debug: Renaming $self->{ currpath }/$_ in $self->{ currpath }/$dist (mv)" if $self->{verbose}>0;
+            say "debug2: rename $self->{ currpath }/$_ , $self->{currpath}/$dist" if $self->{verbose}>1;
+            rename $self->{ currpath } . "/" . $_ ,
+                   $self->{ currpath } . "/" . $dist;
+        }
 	}
-}
+#######################
 1;
 

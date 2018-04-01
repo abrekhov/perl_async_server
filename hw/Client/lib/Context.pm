@@ -34,6 +34,7 @@ use DDP;
         my @a = split(/(?<!\\)\s+/, $self->{context}{string});
         $self->{ context }{ command }= lc shift @a;
         #here will be the part of regexp
+        
         $self->{ context }{ files } = \@a;
 		return $self;
 	}
