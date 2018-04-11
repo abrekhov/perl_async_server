@@ -80,7 +80,7 @@ while ( defined ($_ = $term->readline($prompt)) ) {
 	else{
 		my $context = Context->new( %global, string=>$_);
 		eval{
-			$res = $context->execute();  	
+			#$res = $context->execute();  	
 		 1} or warn "Error: $@ \nThis version support only: " . join(", ",@commands) . " functions.";
 		
 	}
