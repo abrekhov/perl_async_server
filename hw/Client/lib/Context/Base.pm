@@ -6,9 +6,11 @@ no warnings 'uninitialized';
     
     sub new{
         my $class = shift;
+        my $storage = shift;
         my $context = shift;
         my $self = bless { 
-            %{$context}
+            %{$context},
+            storage=>$storage,
         }, $class;
         return $self;
     }

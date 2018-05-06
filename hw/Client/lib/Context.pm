@@ -8,22 +8,28 @@ use Context::List;
 use Context::Copy;
 use Context::Move;
 use Context::Remove;
+use Context::Storage;
 use DDP;
 
 	sub new
 	{
 		my $class = shift;
-        my %global = @_;  
-        p %global;
+        my $storage = shift;
+        my %string = @_;
+        my $global = $storage->global();  
 		my $self = bless{
-    		context=>\%global,
+    		context=>$global,
             commands=>{
                 ls=>'Context::List',#Context::List->new(),
                 cp=>'Context::Copy',#Context::Copy->new(),
                 mv=>'Context::Move',#Context::Move->new(),
                 rm=>'Context::Remove',#Context::Remove->new(),
-            }
+                fs=>'Context::Storage',
+            },
+            storage => $storage,
+            %string,
 		}, $class;
+        p $self;
         $self->prepare();
 		return $self;	
 	}
@@ -31,12 +37,9 @@ use DDP;
 	sub prepare{
 		my $self = shift;
         
-        my @a = split(/(?<!\\)\s+/, $self->{context}{string});#split by normal whitespace
-        $self->{ context }{ command }= lc shift @a;
-        #here will be the part of regexp
-        
+        my @a = split(/(?<!\\)\s+/, $self->{ string });#split by normal whitespace
+        $self->{ context }{ command } = lc shift @a;
         $self->{ context }{ files } = \@a;
-        #$self->extendstr(@a); 
         $self->extendfiles(); 
 		return $self;
 	}
@@ -53,7 +56,6 @@ use DDP;
                 for my $part (@inside){
                     $newstring = $+{prev} . $part . $+{next};
                     push ( @{ $self->{ context }{ files } }, $newstring );
-                    p $self;
                 }
                 if ( $newstring =~ m/\{.*?\}/ ){
                     return $self->extendfiles();
@@ -61,70 +63,13 @@ use DDP;
             }
             $index++;
         }
-        say "LAST self:";
-        p $self;
         return $self;
-    }
-    
-    sub extendstr{
-        my $self = shift;
-
-        my @a = shift @_;
-        $self->{ context }{ files } = []; 
-        foreach ( @a ){ # filename separated with ws of other
-            if ( /\{.*\}/ ){ #check if ther {  }
-                m/(?'prev'.*)\{(?'inside'.*?)\}(?'next'.*)/; #grab all parts from filename
-                my @inside = split ",", $+{inside}; # split by comma in SMALLEST brackets
-                for my $part (@inside){
-                    my $newstring = $+{prev} . $part . $+{next};
-                    if ( $newstring =~ m/\{.*?\}/ ){
-                        say $newstring;
-                        return $self->extendstr( $newstring );
-                    }
-                    push ($self->{ context }{ files }, $newstring);
-                    p $self;
-                }
-            }
-        }
-        return $self;
-    }
-
-    sub extendsubs{
-        my $self = shift;
-
-        my @a = shift @_;
-        my $out;
-        foreach my $word ( @a ){
-            #( my $newstring = $word ) =~ m/(?'prev'.*)\{(?'inside'.*)\}(.*)/;
-            while ( $word =~ s/(?'prev'.*)\{(?'inside'.*?)\}(?'next'.*)/$+{prev}$+{first}$+{next}/g ){
-                #$out .= " " . $+{prev} . $+{first} . $+{next};
-                p %+;
-            }
-            say $word;
-        }
-        
-    }
-
-    sub extendadd{
-        my $self = shift;
-
-        my @a = shift @_;
-        my $out;
-        foreach my $word ( @a ){
-            #( my $newstring = $word ) =~ m/(?'prev'.*)\{(?'inside'.*)\}(.*)/;
-            while ( $word =~ m/(?'prev'.*)\{.*?,|,.*?,|,.*?\}(?'next'.*)/ ){
-                $out .= " " . $+{prev} . $+{first} . $+{next};
-                p %+;
-            }
-            say $word;
-        }
-        
     }
 
     sub execute{
         my $self = shift;
         my $cmd = $self->{ context }{ command };
-        my $obj = $self->{ commands }{ $cmd }->new( $self->{ context } );
+        my $obj = $self->{ commands }{ $cmd }->new( $self->{ storage }, $self->{ context } );
         return $obj->execute();
     }
 ##################

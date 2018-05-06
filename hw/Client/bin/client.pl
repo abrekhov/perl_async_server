@@ -1,18 +1,13 @@
 #!/usr/bin/perl
 
 use Getopt::Long;
-use Pod::Usage;
 use Term::ReadLine;
 use DDP;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
 use Context;
+use Storage;
 
-#use Clicom::Context;
-#use Clicom::List;
-#use Clicom::Copy;
-#use Clicom::Remove;
-#use Clicom::Move;
 use warnings;
 use strict;
 use 5.016;
@@ -63,6 +58,9 @@ $term->read_history();
 my $attribs = $term->Attribs;
 $attribs->{completion_entry_function} = $attribs->{list_completion_function};
 $attribs->{completion_word}=\@commands;
+#Storage init (stay for whole session)
+my $storobj = Storage->new(%global);
+
 my $OUT = $term->OUT || \*STDOUT;
 while ( defined ($_ = $term->readline($prompt)) ) {
 
@@ -78,9 +76,9 @@ while ( defined ($_ = $term->readline($prompt)) ) {
 		exit;
 	}
 	else{
-		my $context = Context->new( %global, string=>$_);
+		my $context = Context->new( $storobj, string =>$_);
 		eval{
-			#$res = $context->execute();  	
+			$res = $context->execute();  	
 		 1} or warn "Error: $@ \nThis version support only: " . join(", ",@commands) . " functions.";
 		
 	}
