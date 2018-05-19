@@ -1,14 +1,21 @@
 #!/usr/bin/env perl
 
 use 5.016;
-use lib "$FindBin::Bin/../lib";
 
+#Modules
 use AnyEvent;
 use Socket ':all';
 use AnyEvent::Socket;
 use AnyEvent::Handle;
 use DDP;
 use EV;
+
+#Local lib
+use FindBin;
+use lib "$FindBin::Bin/../lib";
+use Storage;
+
+
 
 my $BUFSIZE = 2**19;
 
