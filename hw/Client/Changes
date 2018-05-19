@@ -1,6 +1,0 @@
-Revision history for Perl extension Client.
-
-0.01  Sun Apr  1 09:45:44 2018
-	- original version; created by h2xs 1.23 with options
-		-n Client -X
-
