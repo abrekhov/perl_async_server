@@ -9,20 +9,32 @@ use parent 'Context::Base';
 		my $self = shift;
         say "debug: List of files(ls)" if $self->{verbose}>0;
         if (@{$self->{ files }}){
-            foreach (@{$self->{files}}){
+            foreach my $file (@{$self->{files}}){
                 #$self->{ storage }->showFS();
                 say "For file $_ doing ls" if $self->{ verbose };
-                $self->{ storage }->ls($_);
-
-                #say "debug2: qx(ls -lA $self->{currpath}/$_)" if $self->{verbose}>1;
-                #say qx(ls -lA $self->{currpath}/$_);
+                
+                foreach my $dirOrFile (@{ $self->{ storage }{ fs } }){
+                    if ($file){
+                        if ( $dirOrFile =~ m/^\/$file\/([^\/]*?)$/ ){
+                            say $1;    
+                        }
+                    }
+                    else{
+                        if ( $dirOrFile =~ m/^\/([^\/]*)$/){
+                            say $1;
+                        }
+                    }
+                }
             }
         }else{
             $self->{ storage }->showFS();
-            $self->{ storage }->ls();
+            say "For file $_ doing ls" if $self->{ verbose };
             
-            #say "debug2: qx(ls -lA $self->{currpath})" if $self->{verbose}>1;
-            #say qx(ls -lA $self->{currpath});
+            foreach my $dirOrFile (@{ $self->{ storage }{ fs } }){
+                    if ( $dirOrFile =~ m/^\/([^\/]*)$/){
+                        say $1;
+                    }
+            }
         }
     }
 ########################

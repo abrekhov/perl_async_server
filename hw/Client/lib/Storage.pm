@@ -14,7 +14,7 @@ use 5.016;
                 show=>\&showFS,
                 ls  =>\&ls
             },
-            fs=>()
+            fs=>(),
         },$class;
         $self->initFS();
         return $self;
@@ -48,26 +48,6 @@ use 5.016;
         return $self;
     }
 
-    sub ls{
-        my ( $self, $file ) = @_;
-
-        say "debug: file is $file" if $self->{ global }{ verbose };
-
-        foreach my $dirOrFile (@{ $self->{ fs } }){
-            if ($file){
-                if ( $dirOrFile =~ m/^\/$file\/([^\/]*?)$/ ){
-                    say $1;    
-                }
-            }
-            else{
-                if ( $dirOrFile =~ m/^\/([^\/]*)$/){
-                    say $1;
-                }
-            }
-        }
-        return $self;
-    }
-    
     sub global{
         my $self = shift;
         if ( shift ){

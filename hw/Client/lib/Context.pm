@@ -8,7 +8,6 @@ use Context::List;
 use Context::Copy;
 use Context::Move;
 use Context::Remove;
-use Context::Storage;
 use DDP;
 
 	sub new
@@ -24,7 +23,6 @@ use DDP;
                 cp=>'Context::Copy',#Context::Copy->new(),
                 mv=>'Context::Move',#Context::Move->new(),
                 rm=>'Context::Remove',#Context::Remove->new(),
-                fs=>'Context::Storage',
             },
             storage => $storage,
             %string,
