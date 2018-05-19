@@ -49,7 +49,7 @@ $global{currpath}=$currpath;
 my @commands =qw( ls cp rm mv);
 
 
-my $storobj = Storage->new(%global);
+our $storobj = Storage->new(%global);
 p $storobj if $verbose > 1;
 
 

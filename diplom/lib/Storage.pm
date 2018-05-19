@@ -12,9 +12,10 @@ use 5.016;
             commands=>{
                 init=>\&initFS,
                 show=>\&showFS,
-                ls  =>\&ls
+                isExist  =>\&isExist,
             },
             fs=>(),
+#            files=>(),
         },$class;
         $self->initFS();
         return $self;
@@ -44,7 +45,7 @@ use 5.016;
 
     sub showFS{
         my $self = shift;
-        p $self->{ fs };
+        return $self->{ fs };
         return $self;
     }
 
@@ -59,11 +60,29 @@ use 5.016;
         return $self;
     }
 
-    sub stillInStorage
-    {
-        my $self = shift;
-        
+    sub isDir{
+		my $self = shift;
 
+        if (@{$self->{ files }}){
+            foreach my $file (@{$self->{files}}){
+                say "For file $_ doing ls" if $self->{ verbose };
+                
+                foreach my $dirOrFile (@{ $self->{ fs } }){
+                    if ($file){
+                        if ( $dirOrFile =~ m/^\/$file\/([^\/]*?)$/ ){
+                            say $1;    
+                        }
+                    }
+                    else{
+                        if ( $dirOrFile =~ m/^\/([^\/]*)$/){
+                            say $1;
+                        }
+                    }
+                }
+            }
+        }else{
+            return 0;
+        }
     }
 
     #sub execute

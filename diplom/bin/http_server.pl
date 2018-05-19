@@ -3,23 +3,70 @@
 use 5.016;
 
 #Modules
+use Getopt::Long;
 use AnyEvent;
 use Socket ':all';
 use AnyEvent::Socket;
 use AnyEvent::Handle;
 use DDP;
 use EV;
+use utf8;
 
 #Local lib
 use FindBin;
 use lib "$FindBin::Bin/../lib";
+use Context;
 use Storage;
-use EV;
+use Server::HTTPMaker;
+use Encode;
+use URI::Escape;
 
 my $BUFSIZE = 2**19;
 
 
-use Server::HTTPInit;
+our $verbose=0;
+my $instructions = <<EOF;
+Usage:
+	client.pl [-h] [-v] /path/to/somewhere
+	-h | --help - say usage and exit
+	-v | --verbose - be verbose	
+EOF
+
+
+Getopt::Long::Configure('bundling');
+GetOptions(
+	'v|verbose+'=>\$verbose,
+	'h|help'=>sub{ die($instructions); }
+);
+
+
+say "Verbose level: $verbose" if $verbose ;
+
+#Checking all modules
+say "Included modules:" if $verbose>1;
+p %INC if $verbose>1;
+
+
+#Absolute path init
+say "Arguments:[".join(',',@ARGV)."]" if $verbose;
+my $cpath = $ARGV[0] or die $instructions;
+our $currpath = qx(cd $cpath && pwd);
+chomp $currpath; 
+say "Absolute path:" . $currpath if $verbose;
+
+#Global hash
+our %global;
+$global{verbose}=$verbose;
+$global{currpath}=$currpath;
+
+
+#Commands list
+my @commands =qw( ls cp rm mv);
+
+
+our $storobj = Storage->new(%global);
+p $storobj if $verbose > 1;
+
 
 
 tcp_server 0,8080, sub {
@@ -74,7 +121,7 @@ tcp_server 0,8080, sub {
 
 		my $reply = sub {
 			if (defined $_[0]) {
-				$h->push_write("OK ".(length($_[0])+1)."\n".$_[0]."\n");
+				$h->push_write($_[0]);
 			}
 			else {
 				my $err = $_[1];
@@ -83,49 +130,35 @@ tcp_server 0,8080, sub {
 			}
 		};
 
-		# $h->push_read( line => qr/;/, sub {
-		# 	warn "read + '$h->{rbuf}' [@{ $h->{_queue} }]";
-		# 	my (undef, $word) = @_;
-		# 	say "read word 1 '$word'";
-		# } );
-		# $h->push_read( line => qr/;/, sub {
-		# 	warn "read + '$h->{rbuf}' [@{ $h->{_queue} }]";
-		# 	my (undef, $word) = @_;
-		# 	say "read word 2 '$word'";
-		# } );
-		# $h->push_read( line => qr/;/, sub {
-		# 	warn "read + '$h->{rbuf}' [@{ $h->{_queue} }]";
-		# 	my (undef, $word) = @_;
-		# 	say "read word 3 '$word'";
-		# } );
-		# $h->push_read( line => sub {
-		# 	warn "read + '$h->{rbuf}' [@{ $h->{_queue} }]";
-		# 	my (undef, $left) = @_;
-		# 	say "read leftover '$left'";
-		# } );
-
-
-		# my $reader;$reader = sub {
-		# 	$h->push_read( line => qr/(;|\015?\012)/, sub {
-		# 		$reader->();
-		# 		warn "on read + '$h->{rbuf}' [@{ $h->{_queue} }]";
-		# 		shift;
-		# 		my $line = shift;
-
-		# 		p @_;
-		# 	} );
-		# };$reader->();
 
 		my $reader;$reader = sub {
-			$h->push_read( line => qr/Host: 0.0.0.0:8080/, sub {
+			$h->push_read( line => sub {
 				$reader->();
 
 				# warn "on read + '$h->{rbuf}' [@{ $h->{_queue} }]";
 				shift;
 				my $line = shift;
 				p $line;
+
+
+                if ($line =~ /GET \/(.*?) HTTP\/1\.1/){
+                    my $reqpath = uri_unescape( $1 );
+
+                    my $context = Context->new( $storobj, string =>"ls " . $reqpath);
+                    my $body = $context->execute();  	
+                    my $resp = Server::HTTPMaker->new(
+                        status => "200 OK",
+                        type => 'text/plain',
+                        charset => "utf-8",
+                        body => $body,
+                            );
+                    my $forsend = $resp->response();
+                    say $forsend;
+                    p $storobj;
+                    $reply->($forsend);
+                }
                 
-				if ($line =~ /^put\s+(\d+)\s+(.+)$/) {
+				elsif ($line =~ /^put\s+(\d+)\s+(.+)$/) {
 					my ($size,$file) = ($1,$2);
 					say "command put on $size bytes for $file";
 					my $left = $size;
@@ -149,38 +182,12 @@ tcp_server 0,8080, sub {
 						} );
 					};$body->();
 
-					# ### WRONG
-					# my $queue = delete $h->{_queue}; # DO NOT DO SO
-					# my $left = $size;
-					# $h->on_read(sub {
-					# 	my $rd;
-					# 	if (length $h->{rbuf} < $left) {
-					# 		$rd = delete $h->{rbuf};
-					# 		$left -= length $rd;
-					# 		warn sprintf "read %d of %s\n",length($rd),$left;
-					# 	}
-					# 	else {
-					# 		$rd = substr($h->{rbuf},0,$left,'');
-					# 		warn "received all";
-					# 		$h->on_read(undef);
-					# 		$h->{_queue} = $queue;
-					# 	}
-					# });
-					# ### WRONG
-
-					# $h->unshift_read( chunk => $1, sub {
-					# 	shift;
-					# 	# warn "in chunk: '$h->{rbuf}' [@{ $h->{_queue} }]";
-					# 	say "body for put: $_[0]";
-					# 	# p @_;
-					# } );
-					# warn "after unshift: '$h->{rbuf}' [@{ $h->{_queue} }]";
 				}
 				elsif ($line eq '') {
 					# skip
 				}
 				else {
-					say "command $line";
+					#say "command $line";
 					given($line) {
 						when ('ls') {
 							my $out = `ls -lA store`;
@@ -188,7 +195,14 @@ tcp_server 0,8080, sub {
 							# $h->push_write("OK ".(length($out)+1)."\n".$out."\n");
 						}
 						default {
-							$reply->("Unknown command");
+                            my $resp = Server::HTTPMaker->new(
+                                status => "404 Not Found",
+                                type => 'text/plain',
+                                charset => "utf-8",
+                                    );
+                            my $forsend = $resp->response();
+                            $reply->($forsend);
+							#$reply->("Unknown command");
 							# $h->push_write("ERR Unknown command\n");
 						}
 					}
