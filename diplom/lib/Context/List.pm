@@ -2,11 +2,64 @@ package Context::List;
 ########################
 use DDP;
 use utf8;
+use Server::HTTPMaker;
+
 
 use 5.016;
 use parent 'Context::Base';
     
 	sub execute{
+		my $self = shift;
+        my $resp = Server::HTTPMaker->new();
+        if(1){
+            my $body;
+            if (@{$self->{ files }}[0]){ #SUBS
+                    my $fullpath = $self->{ currpath } . "/" . ${ $self->{ files } }[0];
+                    if ( -d $fullpath){
+                        say "Directory request";
+                        opendir( my $d, $fullpath ) or die "$!";
+                        $resp->status("200 OK");
+                        $resp->type("text/html");
+                        $body .= "<html><body>";
+                        while(readdir($d)){
+                            $body .= "<a href='$_'> $_ </a>" . "</br>";
+                        }
+                        $body .= "</body></html>";
+                    }
+                    elsif( -e -R $fullpath){
+                        say "Request for file";
+                        say $fullpath;
+                        open( my $f, '<:raw', $fullpath ) or die "$!";
+                        $resp->type("application/octet-stream");
+                        p $self;
+                        say $self->{ bufsize };
+                        my $bytes = sysread($f, my $buff, 4096);
+                        $body .= $buff;
+                    }
+                    else{
+                        say "Goes wrong!";
+                        $body .= "Permission denied or not found! Sorry!";
+                    }
+            }
+            else{ #ROOT
+                $resp->status("200 OK");
+                $resp->type("text/html");
+                my $fullpath = $self->{ currpath }; 
+                opendir( my $d, $self->{ currpath } ) or die "$!";
+                $body .= "<html><body>";
+                $body .= "Root<br>" if $self->{ verbose };
+                while(readdir($d)){
+                    $body .= "<a href='$_'> $_ </a>" . "</br>";
+                }
+                $body .= "</body></html>";
+            }
+            $resp->body($body);
+            p $resp;
+            return $resp->response();
+        }
+    }
+
+	sub executebak{
 		my $self = shift;
         my $body;
         say "debug: List of files(ls)" if $self->{verbose}>0;
@@ -32,7 +85,6 @@ use parent 'Context::Base';
                 }
             }
         }else{
-            $self->{ storage }->showFS();
             say "For file $_ doing ls" if $self->{ verbose };
             $body .= "For file $_ doing ls\n" if $self->{ verbose };
             

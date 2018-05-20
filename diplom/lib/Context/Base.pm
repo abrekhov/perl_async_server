@@ -11,6 +11,7 @@ no warnings 'uninitialized';
         my $self = bless { 
             %{$context},
             storage=>$storage,
+            @_,
         }, $class;
         return $self;
     }

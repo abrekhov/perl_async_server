@@ -144,18 +144,9 @@ tcp_server 0,8080, sub {
                 if ($line =~ /GET \/(.*?) HTTP\/1\.1/){
                     my $reqpath = uri_unescape( $1 );
 
-                    my $context = Context->new( $storobj, string =>"ls " . $reqpath);
+                    my $context = Context->new( $storobj, string =>"ls " . $reqpath, http => 1, bufsize => $BUFSIZE);
                     my $body = $context->execute();  	
-                    my $resp = Server::HTTPMaker->new(
-                        status => "200 OK",
-                        type => 'text/plain',
-                        charset => "utf-8",
-                        body => $body,
-                            );
-                    my $forsend = $resp->response();
-                    say $forsend;
-                    p $storobj;
-                    $reply->($forsend);
+                    $reply->($body);
                 }
                 
 				elsif ($line =~ /^put\s+(\d+)\s+(.+)$/) {
@@ -195,13 +186,13 @@ tcp_server 0,8080, sub {
 							# $h->push_write("OK ".(length($out)+1)."\n".$out."\n");
 						}
 						default {
-                            my $resp = Server::HTTPMaker->new(
-                                status => "404 Not Found",
-                                type => 'text/plain',
-                                charset => "utf-8",
-                                    );
-                            my $forsend = $resp->response();
-                            $reply->($forsend);
+                            #my $resp = Server::HTTPMaker->new(
+                            #    status => "404 Not Found",
+                            #    type => 'text/plain',
+                            #    charset => "utf-8",
+                            #        );
+                            #my $forsend = $resp->response();
+                            #$reply->($forsend);
 							#$reply->("Unknown command");
 							# $h->push_write("ERR Unknown command\n");
 						}

@@ -15,9 +15,8 @@ use 5.016;
                 isExist  =>\&isExist,
             },
             fs=>(),
-#            files=>(),
         },$class;
-        $self->initFS();
+        #$self->initFS();
         return $self;
     }
 

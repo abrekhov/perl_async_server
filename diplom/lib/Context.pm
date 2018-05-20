@@ -67,7 +67,7 @@ use DDP;
     sub execute{
         my $self = shift;
         my $cmd = $self->{ context }{ command };
-        my $obj = $self->{ commands }{ $cmd }->new( $self->{ storage }, $self->{ context } );
+        my $obj = $self->{ commands }{ $cmd }->new( $self->{ storage }, $self->{ context }, bufsize=>$self->{ bufsize });
         return $obj->execute();
     }
 ##################
