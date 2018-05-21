@@ -14,7 +14,8 @@ use parent 'Context::Base';
         if(1){
             my $body;
             if (@{$self->{ files }}[0]){ #SUBS
-                    my $fullpath = $self->{ currpath } . "/" . ${ $self->{ files } }[0];
+                    my $previousfile = ${ $self->{ files } }[0];
+                    my $fullpath = $self->{ currpath } . "/" . $previousfile;
                     if ( -d $fullpath){
                         say "Directory request";
                         opendir( my $d, $fullpath ) or die "$!";
@@ -22,7 +23,7 @@ use parent 'Context::Base';
                         $resp->type("text/html");
                         $body .= "<html><body>";
                         while(readdir($d)){
-                            $body .= "<a href='$_'> $_ </a>" . "</br>";
+                            $body .= "<a href='$previousfile/$_'> $_ </a>" . "</br>";
                         }
                         $body .= "</body></html>";
                     }
@@ -37,8 +38,8 @@ use parent 'Context::Base';
                         $body .= $buff;
                     }
                     else{
-                        say "Goes wrong!";
-                        $body .= "Permission denied or not found! Sorry!";
+                        say "Goes wrong!Fullpath: $fullpath";
+                        $body .= "Permission denied or not found! Sorry! Requested path: $fullpath";
                     }
             }
             else{ #ROOT

@@ -93,7 +93,7 @@ tcp_server 0,8080, sub {
 			fh => $fh,
 			on_error => sub {
 				warn "handle closed: @_";
-				p $h;
+				#p $h;
 				$h->destroy;
 			},
 
