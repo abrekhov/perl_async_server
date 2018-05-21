@@ -28,6 +28,7 @@ use DDP;
             %string,
 		}, $class;
         p $self;
+        #$self->httpPrepare() if $self->{ http }; # this \ slashes not acceptable by GC so i need new kostyl'
         $self->prepare();
 		return $self;	
 	}
@@ -36,6 +37,16 @@ use DDP;
 		my $self = shift;
         
         my @a = split(/(?<!\\)\s+/, $self->{ string });#split by normal whitespace
+        $self->{ context }{ command } = lc shift @a;
+        $self->{ context }{ files } = \@a;
+        $self->extendfiles(); 
+		return $self;
+	}
+
+	sub httpPrepare{
+		my $self = shift;
+        
+        my @a = split(/(?<!\\)\s+/, $self->{ string }, 1);#split by normal whitespace
         $self->{ context }{ command } = lc shift @a;
         $self->{ context }{ files } = \@a;
         $self->extendfiles(); 

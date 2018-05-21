@@ -16,6 +16,7 @@ use parent 'Context::Base';
             if (@{$self->{ files }}[0]){ #SUBS
                     my $previousfile = ${ $self->{ files } }[0];
                     my $fullpath = $self->{ currpath } . "/" . $previousfile;
+                    (my $relative = $fullpath) =~ s/$self->{ currpath }//g;
                     if ( -d $fullpath){
                         say "Directory request";
                         opendir( my $d, $fullpath ) or die "$!";
@@ -23,7 +24,12 @@ use parent 'Context::Base';
                         $resp->type("text/html");
                         $body .= "<html><body>";
                         while(readdir($d)){
-                            $body .= "<a href='$previousfile/$_'> $_ </a>" . "</br>";
+                            if ( $_ =~ /^\.{1,2}/){
+                                $body .= "<a href='$_'> $_ </a>" . "</br>";
+                            }
+                            else{
+                                $body .= "<a href='$relative/$_'> $_ </a>" . "</br>";
+                            }
                         }
                         $body .= "</body></html>";
                     }
@@ -50,7 +56,8 @@ use parent 'Context::Base';
                 $body .= "<html><body>";
                 $body .= "Root<br>" if $self->{ verbose };
                 while(readdir($d)){
-                    $body .= "<a href='$_'> $_ </a>" . "</br>";
+                    
+                    $body .= "<a href='$_'> $_ </a>" . "</br>" if $_ !~ /^\.{1,2}/;
                 }
                 $body .= "</body></html>";
             }
