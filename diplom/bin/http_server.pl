@@ -138,14 +138,13 @@ tcp_server 0,8080, sub {
 				# warn "on read + '$h->{rbuf}' [@{ $h->{_queue} }]";
 				shift;
 				my $line = shift;
-				p $line;
-
 
                 if ($line =~ /GET \/(.*?) HTTP\/1\.1/){
                     my $reqpath = uri_unescape( $1 );
 
                     my $context = Context->new( $storobj, string =>"ls " . $reqpath, http => 1, bufsize => $BUFSIZE);
                     my $body = $context->execute();  	
+                    p $context;
                     $reply->($body);
                 }
                 
@@ -182,7 +181,7 @@ tcp_server 0,8080, sub {
 					given($line) {
 						when ('ls') {
 							my $out = `ls -lA store`;
-							$reply->($out);
+							#$reply->($out);
 							# $h->push_write("OK ".(length($out)+1)."\n".$out."\n");
 						}
 						default {

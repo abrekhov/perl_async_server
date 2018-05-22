@@ -8,12 +8,12 @@ use utf8;
     {
         my $class = shift;
         my $self = bless{
-            @_,
             status=>"200 OK",
             type  =>"text/html",
             charset => "utf-8",
             body => "Permission denied or not found! Sorry!",
             length => length("Permission denied or not found! Sorry!"),
+            @_,
         },$class;
         
         return $self;
