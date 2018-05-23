@@ -61,7 +61,7 @@ $global{currpath}=$currpath;
 
 
 #Commands list
-my @commands =qw( ls cp rm mv);
+my @commands =qw( ls cp rm mv );
 
 
 our $storobj = Storage->new(%global);
@@ -140,6 +140,7 @@ tcp_server 0,8080, sub {
 				my $line = shift;
 
                 if ($line =~ /GET \/(.*?) HTTP\/1\.1/){
+                    return 0 if $1 eq "favicon.ico";
                     my $reqpath = uri_unescape( $1 );
 
                     my $context = Context->new( $storobj, string =>"ls " . $reqpath, http => 1, bufsize => $BUFSIZE);

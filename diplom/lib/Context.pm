@@ -48,7 +48,7 @@ use DDP;
         
         my @a = split(/(?<!\\)\s+/, $self->{ string }, 2);#split by normal whitespace
         $self->{ context }{ command } = lc shift @a;
-        $a[0] =~ s/(s+)/\\$1/g;
+        #$a[0] =~ s/(\s+)/\\$1/g; Dont need to escape whitespace while using open!!!!
         $self->{ context }{ files } = \@a;
         $self->extendfiles(); 
 		return $self;

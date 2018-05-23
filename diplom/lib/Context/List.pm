@@ -33,14 +33,14 @@ use parent 'Context::Base';
                         }
                         $body .= "</body></html>";
                     }
-                    elsif( -e -R $fullpath){
+                    elsif( $fullpath){
                         say "Request for file";
                         say $fullpath;
                         open( my $f, '<:raw', $fullpath ) or die "$!";
                         $resp->type("application/octet-stream");
                         p $self;
                         say $self->{ bufsize };
-                        my $bytes = sysread($f, my $buff, 4096);
+                        my $bytes = sysread($f, my $buff, $self->{ bufsize });
                         $body .= $buff;
                     }
                     else{
