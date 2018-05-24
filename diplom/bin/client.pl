@@ -11,6 +11,9 @@ use AnyEvent::Handle;
 use AnyEvent::ReadLine::Gnu;
 use DDP;
 
+my @commands =qw( ls cp rm mv mkdir rmdir put get touch cat );
+my $comds_regex = join "|", @commands;
+
 sub say {
 	# warn "my say";
 	my $line = "@_";
@@ -18,6 +21,7 @@ sub say {
 	AnyEvent::ReadLine::Gnu->print($line);
 }
 
+say $comds_regex;
 my $cv = AE::cv;
 
 # if (@ARGV != 1) { die "Usage:\n\t$0 file\n"; }
@@ -33,7 +37,7 @@ END {
 	if ($rl) { $rl->hide; }
 }
 
-tcp_connect 0, 8080, sub {
+tcp_connect 0, 1025, sub {
 	my $fh = shift
 		or return warn "Connect failed: $!";
 
@@ -42,7 +46,6 @@ tcp_connect 0, 8080, sub {
 		fh => $fh,
 		on_error => sub {
 			warn "handle closed: @_";
-			# p $h;
 			$h->destroy;
 			$cv->send;
 		},
@@ -54,7 +57,7 @@ tcp_connect 0, 8080, sub {
 		AnyEvent::ReadLine::Gnu->hide;
 
 		$h->push_write("$cmd\n");
-		$h->push_read(line => sub {
+		$h->push_read(line => qr/\n\n/, sub {
 			if ($_[1] =~ /^OK\s+(\d+)/) {
 				$h->unshift_read(chunk => $1, sub {
 					say $_[1];
@@ -143,7 +146,7 @@ tcp_connect 0, 8080, sub {
 	};
 
 	$rl = AnyEvent::ReadLine::Gnu->new(
-		prompt => "xxx> ",
+		prompt => "> ",
 		on_line => sub {
 			given (shift) {
 				when (undef) { # Ctrl + D
@@ -152,8 +155,8 @@ tcp_connect 0, 8080, sub {
 				when(/put \s+ (.+?)\s*$/x) {
 					$put->($1);
 				}
-				when(/^(ls)$/x) {
-					$command->($1);
+				when(m/^\s*($comds_regex)/) {
+					$command->($_);
 				}
 				default {
 					say "wrong command: $_";

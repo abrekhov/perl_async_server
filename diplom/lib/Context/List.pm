@@ -11,7 +11,8 @@ use parent 'Context::Base';
 	sub execute{
 		my $self = shift;
         my $resp = Server::HTTPMaker->new();
-        if(1){
+        p $self;
+        if($self->{ http }){
             my $body;
             if (@{$self->{ files }}[0]){ #SUBS
                     my $previousfile = ${ $self->{ files } }[0];
@@ -64,6 +65,49 @@ use parent 'Context::Base';
             $resp->body($body);
             p $resp;
             return $resp->response();
+        }
+        else{#NOT HTTP
+            my $body;
+            if (@{$self->{ files }}[0]){ #SUBS
+                    my $previousfile = ${ $self->{ files } }[0];
+                    my $fullpath = $self->{ currpath } . "/" . $previousfile;
+                    (my $relative = $fullpath) =~ s/$self->{ currpath }//g;
+                    if ( -d $fullpath){
+                        say "Directory request";
+                        opendir( my $d, $fullpath ) or die "$!";
+                        while(readdir($d)){
+                            if ( $_ =~ /^\.{1,2}/){
+                                $body .= "$_ \n";
+                            }
+                            else{
+                                $body .= "$_ \n";
+                            }
+                        }
+                    }
+                    elsif( -e $fullpath){
+                        say "Request for file";
+                        say $fullpath;
+                        open( my $f, '<:raw', $fullpath ) or die "$!";
+                        $resp->type("application/octet-stream");
+                        p $self;
+                        say $self->{ bufsize };
+                        my $bytes = sysread($f, my $buff, $self->{ bufsize });
+                        $body .= $buff;
+                    }
+                    else{
+                        say "Goes wrong!Fullpath: $fullpath";
+                        $body .= "Permission denied or not found! Sorry! Requested path: $fullpath";
+                    }
+            }
+            else{ #ROOT
+                my $fullpath = $self->{ currpath }; 
+                opendir( my $d, $self->{ currpath } ) or die "$!";
+                while(readdir($d)){
+                    $body .= "$_ \n" if $_ !~ /^\.{1,2}/;
+                }
+            }
+            return $body . "\n";
+            
         }
     }
 

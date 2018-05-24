@@ -28,8 +28,8 @@ use DDP;
             %string,
 		}, $class;
         p $self;
-        $self->httpPrepare(); # this \ slashes not acceptable by GC so i need new kostyl'
-        #$self->prepare();
+        $self->httpPrepare() if $self->{ http } == 1; # this \ slashes not acceptable by GC so i need new kostyl'
+        $self->prepare() if $self->{ http } == 0 ;
 		return $self;	
 	}
 
@@ -79,7 +79,7 @@ use DDP;
     sub execute{
         my $self = shift;
         my $cmd = $self->{ context }{ command };
-        my $obj = $self->{ commands }{ $cmd }->new( $self->{ storage }, $self->{ context }, bufsize=>$self->{ bufsize });
+        my $obj = $self->{ commands }{ $cmd }->new( $self->{ storage }, $self->{ context }, bufsize=>$self->{ bufsize }, http=>$self->{ http });
         return $obj->execute();
     }
 ##################

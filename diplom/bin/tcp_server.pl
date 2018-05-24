@@ -61,7 +61,7 @@ $global{currpath}=$currpath;
 
 
 #Commands list
-my @commands =qw( ls cp rm mv );
+my @commands =qw( ls cp rm mv mkdir rmdir put get touch cat );
 
 
 our $storobj = Storage->new(%global);
@@ -69,7 +69,7 @@ p $storobj if $verbose > 1;
 
 
 
-tcp_server 0,8080, sub {
+tcp_server 0,1025, sub {
 	my $fh = shift;
 	# setsockopt($fh, SOL_SOCKET, SO_RCVBUF, 1024) or warn "setsockopt failed: $!";
 	warn "Client connected: @_";
@@ -137,6 +137,11 @@ tcp_server 0,8080, sub {
 
 				shift;
 				my $line = shift;
+
+                my $context = Context->new( $storobj, string=> $line, http=>0, bufsize=>$BUFSIZE );
+                my $body = $context->execute();
+                p $context;
+                $reply->($body);
 
                 if ($line =~ /GET \/(.*?) HTTP\/1\.1/){
                     return 0 if $1 eq "favicon.ico";
