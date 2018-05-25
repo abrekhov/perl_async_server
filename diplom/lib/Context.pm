@@ -4,6 +4,8 @@ use 5.016;
 use warnings;
 no warnings 'uninitialized';
 use utf8;
+use File::Spec;
+use Cwd 'abs_path';
 use Context::List;
 use Context::Copy;
 use Context::Move;
@@ -27,9 +29,17 @@ use DDP;
             storage => $storage,
             %string,
 		}, $class;
+        say "Context class:";
         p $self;
-        $self->httpPrepare() if $self->{ http } == 1; # this \ slashes not acceptable by GC so i need new kostyl'
-        $self->prepare() if $self->{ http } == 0 ;
+        if ( $self->{ http }==1 ){
+            $self->httpPrepare(); # this \ slashes not acceptable by GC so i need new kostyl'
+        }
+        else{
+            $self->prepare() if $self->{ http } == 0 ;
+            $self->checkIfUnderRoot() if $self->{ http } == 0;
+            $self->notInRootClean();
+        }
+        
 		return $self;	
 	}
 
@@ -74,6 +84,26 @@ use DDP;
             $index++;
         }
         return $self;
+    }
+    
+    sub checkIfUnderRoot{
+        my $self = shift;
+        my $relpath = shift;
+        say $self->{ context }{ currpath };
+        say abs_path($self->{ context }{ currpath } . "/" . $_ );
+        return 1 if abs_path( $self->{ context }{ currpath } . "/" . $_ )=~ m/^$self->{ context }{ currpath }/;
+        return 0;
+    }
+
+    sub notInRootClean{
+        my $self = shift;
+        say scalar @{[ @{$self->{ context }{ files }} ]};
+        if (scalar @{[ @{$self->{ context }{ files }} ]} ){
+            say "Checking files under rooting";
+            my @newfiles = grep { $self->checkIfUnderRoot($_) } @{[@{$self->{ context }{ files }}]};
+            say join ",", @newfiles;
+            $self->{ context }{ files } = \@newfiles;
+        }
     }
 
     sub execute{
