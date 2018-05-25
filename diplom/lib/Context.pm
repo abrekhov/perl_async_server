@@ -14,6 +14,7 @@ use Context::Move;
 use Context::Remove;
 use Context::Cat;
 use Context::Touch;
+use Context::Mkdir;
 use DDP;
 
 	sub new
@@ -31,6 +32,7 @@ use DDP;
                 rm       =>  'Context::Remove',#Context::Remove->new(),
                 cat      =>  'Context::Cat',#Context::Remove->new(),
                 touch    =>  'Context::Touch',#Context::Remove->new(),
+                mkdir    =>  'Context::Mkdir',#Context::Remove->new(),
             },
             storage => $storage,
             %string,
