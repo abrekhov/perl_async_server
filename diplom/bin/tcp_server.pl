@@ -93,14 +93,13 @@ tcp_server 0,1025, sub {
 			fh => $fh,
 			on_error => sub {
 				warn "handle closed: @_";
-				#p $h;
 				$h->destroy;
 			},
 
 			max_read_size => $BUFSIZE,
 			read_size => $BUFSIZE,
 
-			timeout => 600,
+			timeout => 1200,
 			# on_read => sub {
 			# 	my $h = shift;
 			# 	warn "on read + '$h->{rbuf}' [@{ $h->{_queue} }]";
@@ -185,7 +184,7 @@ tcp_server 0,1025, sub {
 					#say "command $line";
 					given($line) {
 						when ('ls') {
-							my $out = `ls -lA store`;
+							#my $out = `ls -lA store`;
 							#$reply->($out);
 							# $h->push_write("OK ".(length($out)+1)."\n".$out."\n");
 						}

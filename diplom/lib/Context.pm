@@ -6,10 +6,14 @@ no warnings 'uninitialized';
 use utf8;
 use File::Spec;
 use Cwd 'abs_path';
+use File::Copy;
+#Local
 use Context::List;
 use Context::Copy;
 use Context::Move;
 use Context::Remove;
+use Context::Cat;
+use Context::Touch;
 use DDP;
 
 	sub new
@@ -21,10 +25,11 @@ use DDP;
 		my $self = bless{
     		context=>$global,
             commands=>{
-                ls=>'Context::List',#Context::List->new(),
-                cp=>'Context::Copy',#Context::Copy->new(),
-                mv=>'Context::Move',#Context::Move->new(),
-                rm=>'Context::Remove',#Context::Remove->new(),
+                ls  =>  'Context::List',#Context::List->new(),
+                cp  =>  'Context::Copy',#Context::Copy->new(),
+                mv  =>  'Context::Move',#Context::Move->new(),
+                rm  =>  'Context::Remove',#Context::Remove->new(),
+                cat =>  'Context::Cat',#Context::Remove->new(),
             },
             storage => $storage,
             %string,
@@ -35,8 +40,8 @@ use DDP;
             $self->httpPrepare(); # this \ slashes not acceptable by GC so i need new kostyl'
         }
         else{
-            $self->prepare() if $self->{ http } == 0 ;
-            $self->checkIfUnderRoot() if $self->{ http } == 0;
+            $self->prepare()   ;
+            $self->checkIfUnderRoot() ;
             $self->notInRootClean();
         }
         
@@ -45,10 +50,12 @@ use DDP;
 
 	sub prepare{
 		my $self = shift;
-        
+        say "Preparing files"; 
         my @a = split(/(?<!\\)\s+/, $self->{ string });#split by normal whitespace
         $self->{ context }{ command } = lc shift @a;
-        $self->{ context }{ files } = \@a;
+        my @newa = map {$_ =~ s/\\//g; $_} @a;
+        say "Newarray : ", join ",", @newa;
+        $self->{ context }{ files } = \@newa;
         $self->extendfiles(); 
 		return $self;
 	}
@@ -59,7 +66,6 @@ use DDP;
         my @a = split(/(?<!\\)\s+/, $self->{ string }, 2);#split by normal whitespace
         $self->{ context }{ command } = lc shift @a;
         #$a[0] =~ s/(\s+)/\\$1/g; Dont need to escape whitespace while using open!!!!
-        $self->{ context }{ files } = \@a;
         $self->extendfiles(); 
 		return $self;
 	}
@@ -97,6 +103,8 @@ use DDP;
 
     sub notInRootClean{
         my $self = shift;
+        say "Context class:";
+        p $self;
         say scalar @{[ @{$self->{ context }{ files }} ]};
         if (scalar @{[ @{$self->{ context }{ files }} ]} ){
             say "Checking files under rooting";

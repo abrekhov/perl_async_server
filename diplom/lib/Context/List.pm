@@ -70,35 +70,36 @@ use parent 'Context::Base';
         else{#NOT HTTP
             my $body;
             if (@{$self->{ files }}[0]){ #SUBS
-                    my $previousfile = ${ $self->{ files } }[0];
+                foreach my $previousfile ( @{$self->{ files }} ){
+                    #my $previousfile = ${ $self->{ files } }[0];
                     my $fullpath = $self->{ currpath } . "/" . $previousfile;
+                    my $total = 0;
                     (my $relative = $fullpath) =~ s/$self->{ currpath }//g;
                     if ( -d $fullpath){
-                        say "Directory request";
+                        say "Directory $previousfile";
+                        $body .= "Directory $previousfile:\n";
                         opendir( my $d, $fullpath ) or die "$!";
                         while(readdir($d)){
                             if ( $_ =~ /^\.{1,2}/){
-                                $body .= "$_ \n";
+                                #$body .= "$_ \n";
                             }
                             else{
                                 $body .= "$_ \n";
+                                $total++;
                             }
                         }
+                        $body .= "Total: $total\n";
                     }
                     elsif( -e $fullpath){
                         say "Request for file";
+                        $body .= "It is file! Use cat if you want to look inside \n";
                         say $fullpath;
-                        open( my $f, '<:raw', $fullpath ) or die "$!";
-                        $resp->type("application/octet-stream");
-                        p $self;
-                        say $self->{ bufsize };
-                        my $bytes = sysread($f, my $buff, $self->{ bufsize });
-                        $body .= $buff;
                     }
                     else{
                         say "Goes wrong!Fullpath: $fullpath";
-                        $body .= "Permission denied or not found! Sorry! Requested path: $fullpath";
+                        $body .= "Permission denied or not found! Sorry! \n";
                     }
+                }
             }
             else{ #ROOT
                 my $fullpath = $self->{ currpath }; 

@@ -49,7 +49,7 @@ tcp_connect 0, 1025, sub {
 			$h->destroy;
 			$cv->send;
 		},
-		timeout => 30,
+		timeout => 1200,
 	);
 
 	my $command = sub {
@@ -158,12 +158,20 @@ tcp_connect 0, 1025, sub {
 				when(m/^\s*($comds_regex)/) {
 					$command->($_);
 				}
+                when(m/^\s*exit/){
+                    say "Exitting client...";
+                    exit;
+                }
+                when(m/^$/){
+                    #skip
+                }
 				default {
 					say "wrong command: $_";
 				}
 			}
 		},
 	);
+    $rl->read_history();
 
 	# my $length = length $data;
 	
@@ -189,3 +197,9 @@ tcp_connect 0, 1025, sub {
 };
 
 $cv->recv;
+
+END{
+	if(defined($rl)){
+		$rl->write_history() or say "History written";
+	}
+}
