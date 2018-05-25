@@ -137,6 +137,7 @@ tcp_server 0,8080, sub {
 
 				shift;
 				my $line = shift;
+                say $line;
 
                 if ($line =~ /GET \/(.*?) HTTP\/1\.1/){
                     return 0 if $1 eq "favicon.ico";
