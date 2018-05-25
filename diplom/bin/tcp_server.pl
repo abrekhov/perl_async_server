@@ -137,6 +137,7 @@ tcp_server 0,1025, sub {
 				shift;
 				my $line = shift;
 
+
                 my $context = Context->new( $storobj, string=> $line, http=>0, bufsize=>$BUFSIZE );
                 my $body = $context->execute();
                 p $context;

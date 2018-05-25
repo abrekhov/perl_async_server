@@ -152,6 +152,9 @@ tcp_connect 0, 1025, sub {
 				when (undef) { # Ctrl + D
 					$cv->send;
 				}
+                when (m/^\!(.*)/){
+                    say qx($1);
+                }
 				when(/put \s+ (.+?)\s*$/x) {
 					$put->($1);
 				}

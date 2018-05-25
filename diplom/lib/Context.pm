@@ -25,11 +25,12 @@ use DDP;
 		my $self = bless{
     		context=>$global,
             commands=>{
-                ls  =>  'Context::List',#Context::List->new(),
-                cp  =>  'Context::Copy',#Context::Copy->new(),
-                mv  =>  'Context::Move',#Context::Move->new(),
-                rm  =>  'Context::Remove',#Context::Remove->new(),
-                cat =>  'Context::Cat',#Context::Remove->new(),
+                ls       =>  'Context::List',#Context::List->new(),
+                cp       =>  'Context::Copy',#Context::Copy->new(),
+                mv       =>  'Context::Move',#Context::Move->new(),
+                rm       =>  'Context::Remove',#Context::Remove->new(),
+                cat      =>  'Context::Cat',#Context::Remove->new(),
+                touch    =>  'Context::Touch',#Context::Remove->new(),
             },
             storage => $storage,
             %string,
