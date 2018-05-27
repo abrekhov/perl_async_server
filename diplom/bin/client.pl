@@ -5,6 +5,7 @@ use strict;
 use feature 'switch';
 no warnings 'experimental';
 use Socket ':all';
+use utf8;
 use AnyEvent;
 use AnyEvent::Socket;
 use AnyEvent::Handle;
@@ -71,7 +72,9 @@ tcp_connect 0, 1025, sub {
 		});
 
 	};
+    
 
+    ############PUT
 	my $put = sub {
 		my $file = shift;
 		my $size = -s $file;
@@ -89,6 +92,7 @@ tcp_connect 0, 1025, sub {
 				});
 			}
 			else {
+                say "Response from server:";
 				say $_[1];
 			}
 		});
@@ -102,13 +106,6 @@ tcp_connect 0, 1025, sub {
 			},
 			max_read_size => $BUFSIZE,
 			read_size     => $BUFSIZE,
-			# on_read => sub {
-			# 	my $wr = delete $_[0]{rbuf};
-			# 	# p $rh;
-			# 	$left -= length $wr;
-			# 	$h->push_write($wr);
-			# 	say "write buffer ".length $h->{wbuf};
-			# },
 		);
 
 		my $do;$do = sub {
@@ -118,9 +115,8 @@ tcp_connect 0, 1025, sub {
 					$left -= length $wr;
 					$h->push_write($wr);
 					if ($h->{wbuf}) {
-						say "write buffer ".length $h->{wbuf};
+						#say "write buffer ".length $h->{wbuf};
 						$h->on_drain(sub {
-							# warn "drained";
 							$h->on_drain(undef);
 							$do->();
 						});
@@ -135,13 +131,48 @@ tcp_connect 0, 1025, sub {
 				warn "finish";
 				$rh->destroy;
 				AnyEvent::ReadLine::Gnu->show;
-
-				# $h->on_drain(sub {
-				# 	$h->destroy;
-				# 	$cv->send;
-				# });
 			}
 		};$do->();
+
+	};
+    
+    ############GET
+	my $get = sub {
+        #my $size = shift;
+        my $file = shift;
+        say "Request for $file";
+        my $size;
+		$h->push_write("get $file\n");
+		$h->push_read(line =>  sub {
+			if ($_[1] =~ /^get\s+(\d+)\s+(\w+)$/) {
+                $size = $1;
+                say "Size came from server: $size bytes";
+                my $left = $size;
+                open my $fh, '>:raw', "$file" or die "Cannot open filehandler on write: $!";
+                my $body;$body = sub {
+                    $h->unshift_read( chunk => $left > $BUFSIZE ? $BUFSIZE : $left, sub {
+                        my $rd = $_[1];
+                        say "Rd: $rd";
+                        $left -= length $rd;
+                        $h->{ on_error } = sub { close($fh) or die "Cannot close filehandler"; };
+                        warn sprintf "read %d, left %s\n",length($rd),$left;
+                        syswrite($fh,$rd);
+                        if ($left == 0) {
+                            undef $body;
+                            close $fh;
+                            say "File saved";
+                        }
+                        else {
+                            $body->();
+                        }
+                    } );
+                };$body->();
+			}
+			else {
+				say $_[1];
+				AnyEvent::ReadLine::Gnu->show;
+			}
+		});
 
 	};
 
@@ -155,9 +186,12 @@ tcp_connect 0, 1025, sub {
                 when (m/^\!(.*)/){
                     say qx($1);
                 }
-				when(/put \s+ (.+?)\s*$/x) {
+				when(/put\s+(.+?)\s*$/x) {
 					$put->($1);
 				}
+                when(/get\s+(.*)$/){
+                    $get->($1);
+                }
 				when(m/^\s*($comds_regex)/) {
 					$command->($_);
 				}
@@ -174,6 +208,9 @@ tcp_connect 0, 1025, sub {
 			}
 		},
 	);
+    my $attribs = $rl->Attribs;
+    $attribs->{completion_entry_function} = $attribs->{list_completion_function};
+    $attribs->{completion_word}=\@commands;
     $rl->read_history();
 
 	# my $length = length $data;
@@ -194,10 +231,15 @@ tcp_connect 0, 1025, sub {
 
 }, sub {
 	my $fh = shift;
-	# setsockopt($fh, SOL_SOCKET, SO_SNDBUF, 1024) or warn "setsockopt failed: $!";
-	# warn "prepare: @_";
 	1;
 };
+
+$SIG{'INT'} = sub {
+    if(defined($rl)){
+	    $rl->print("> \n");
+    }
+};
+
 
 $cv->recv;
 

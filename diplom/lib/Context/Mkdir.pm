@@ -15,8 +15,12 @@ use parent 'Context::Base';
         if (@{$self->{ files }}[0]){ #SUBS
             foreach my $previousfile ( @{$self->{ files }} ){
                 my $fullpath = $self->{ currpath } . "/" . $previousfile;
-                mkdir $fullpath or $body .= "Failed to create a directory $previousfile: $!\n";
-                $body .= "New directory created: $previousfile\n";
+                if ( mkdir $fullpath ){
+                    $body .= "Folder $previousfile created\n";
+                }
+                else{
+                    $body .= "Failed to create a directory $previousfile: $!\n";
+                }
             }
         }
         else{ #ROOT

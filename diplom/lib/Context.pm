@@ -41,9 +41,11 @@ use DDP;
         p $self;
         if ( $self->{ http } == 1 ){
             $self->httpPrepare(); # this \ slashes not acceptable by GC so i need new kostyl'
+            $self->checkIfUnderRoot() ;
+            $self->notInRootClean();
         }
         else{
-            $self->prepare()   ;
+            $self->prepare();
             $self->checkIfUnderRoot() ;
             $self->notInRootClean();
         }

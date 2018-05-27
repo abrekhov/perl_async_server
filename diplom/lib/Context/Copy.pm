@@ -24,7 +24,7 @@ use parent 'Context::Base';
             }    
     	}
         else{
-                $body .= "Where are two arguments?\n";
+                $body .= "Need at least 2 arguments\n";
         }
         return $body . "\n";
 
